@@ -4,23 +4,34 @@ import { Card } from "@/components/ui/card";
 import { ArrowRight, Target, Timer, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-running.jpg";
 import Survey from "@/components/Survey";
-import TrainingPlan from "@/components/TrainingPlan";
+import Dashboard from "@/components/Dashboard";
+import MultiWeekTrainingPlan from "@/components/MultiWeekTrainingPlan";
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "plan">("landing");
+  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "dashboard" | "plan">("landing");
   const [userData, setUserData] = useState(null);
 
   const handleSurveyComplete = (data: any) => {
     setUserData(data);
-    setCurrentStep("plan");
+    setCurrentStep("dashboard");
   };
 
   if (currentStep === "survey") {
     return <Survey onComplete={handleSurveyComplete} onBack={() => setCurrentStep("landing")} />;
   }
 
+  if (currentStep === "dashboard" && userData) {
+    return (
+      <Dashboard 
+        userData={userData} 
+        onNavigateToTraining={() => setCurrentStep("plan")}
+        onBack={() => setCurrentStep("survey")} 
+      />
+    );
+  }
+
   if (currentStep === "plan" && userData) {
-    return <TrainingPlan userData={userData} onBack={() => setCurrentStep("survey")} />;
+    return <MultiWeekTrainingPlan userData={userData} onBack={() => setCurrentStep("dashboard")} />;
   }
 
   return (
