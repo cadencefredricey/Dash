@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +13,23 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ userData, onNavigateToTraining, onBack }: DashboardProps) => {
-  const [coachName, setCoachName] = useState("Coach Sarah");
+  const [coachName, setCoachName] = useState("Coach Dash"); 
   const [tempCoachName, setTempCoachName] = useState(coachName);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
-  // Mock streak data - in real app this would come from user progress
-  const currentStreak = 5;
-  const longestStreak = 12;
-  const totalWorkouts = 23;
-  const weeklyGoal = parseInt(userData.daysPerWeek);
-  const thisWeekCompleted = 3;
+
+  // 🔹 Track streak stats from localStorage
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [totalWorkouts, setTotalWorkouts] = useState(0);
+
+  const weeklyGoal = parseInt(userData.daysPerWeek || "0");
+  const thisWeekCompleted = 0;
+
+  useEffect(() => {
+    setCurrentStreak(parseInt(localStorage.getItem("currentStreak") || "0", 10));
+    setLongestStreak(parseInt(localStorage.getItem("longestStreak") || "0", 10));
+    setTotalWorkouts(parseInt(localStorage.getItem("totalWorkouts") || "0", 10));
+  }, []);
 
   const handleSaveCoachName = () => {
     setCoachName(tempCoachName);
@@ -31,7 +38,7 @@ const Dashboard = ({ userData, onNavigateToTraining, onBack }: DashboardProps) =
 
   const streakDays = Array.from({ length: 14 }, (_, i) => ({
     date: new Date(Date.now() - (13 - i) * 24 * 60 * 60 * 1000),
-    completed: i < 9 || i >= 12 // Mock completion pattern
+    completed: i < 9 || i >= 12 // Mock pattern
   }));
 
   return (
@@ -146,38 +153,31 @@ const Dashboard = ({ userData, onNavigateToTraining, onBack }: DashboardProps) =
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Training Plan</h3>
-                <p className="text-muted-foreground">
-                  View your personalized {userData.daysPerWeek}-day training schedule
+                <h3 className="text-lg font-semibold mb-1">View Training Plan</h3>
+                <p className="text-sm text-muted-foreground">
+                  Check your upcoming workouts
                 </p>
-                <Badge className="mt-3 bg-gradient-primary text-white">
-                  {userData.goal.replace("-", " ")}
-                </Badge>
               </div>
-              <ChevronRight className="h-6 w-6 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="bg-gradient-secondary w-10 h-10 rounded-lg flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
-              </div>
+
+          <Card className="p-6 cursor-pointer hover:shadow-medium transition-shadow duration-300">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold">Your Coach</h3>
-                <p className="text-muted-foreground">{coachName}</p>
+                <h3 className="text-lg font-semibold mb-1">Progress Report</h3>
+                <p className="text-sm text-muted-foreground">
+                  View detailed progress analytics
+                </p>
               </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              "Great job on your consistency! Today's interval training will help build your speed."
-            </p>
           </Card>
         </div>
 
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onBack}>
-            Back to Survey
-          </Button>
+        {/* Footer */}
+        <div className="text-center text-sm text-muted-foreground">
+          <p>Keep pushing toward your goal — one run at a time!</p>
         </div>
       </div>
     </div>

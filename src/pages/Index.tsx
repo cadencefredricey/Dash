@@ -8,7 +8,7 @@ import Dashboard from "@/components/Dashboard";
 import MultiWeekTrainingPlan from "@/components/MultiWeekTrainingPlan";
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "dashboard" | "plan">("landing");
+  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "dashboard" | "plan">("dashboard");
   const [userData, setUserData] = useState(null);
 
   const handleSurveyComplete = (data: any) => {
@@ -33,6 +33,7 @@ const Index = () => {
   if (currentStep === "plan" && userData) {
     return <MultiWeekTrainingPlan userData={userData} onBack={() => setCurrentStep("dashboard")} />;
   }
+  
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -61,7 +62,8 @@ const Index = () => {
               onClick={() => setCurrentStep("survey")}
               className="text-lg px-8 py-4 shadow-strong hover:shadow-medium transition-all duration-300"
             >
-              Start Your Journey
+              {/* customized button */}
+              Start Your Journey People
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

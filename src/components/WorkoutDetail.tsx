@@ -35,6 +35,23 @@ const WorkoutDetail = ({ workout, onBack, onComplete }: WorkoutDetailProps) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const { toast } = useToast();
 
+  // 🔹 Handle workout completion (updates streaks)
+  const handleComplete = () => {
+    const currentStreak = parseInt(localStorage.getItem("currentStreak") || "0", 10);
+    const newStreak = currentStreak + 1;
+    localStorage.setItem("currentStreak", String(newStreak));
+
+    const longestStreak = parseInt(localStorage.getItem("longestStreak") || "0", 10);
+    if (newStreak > longestStreak) {
+      localStorage.setItem("longestStreak", String(newStreak));
+    }
+
+    const totalWorkouts = parseInt(localStorage.getItem("totalWorkouts") || "0", 10) + 1;
+    localStorage.setItem("totalWorkouts", String(totalWorkouts));
+
+    setShowFeedback(true);
+  };
+
   const handleSubmitFeedback = () => {
     toast({
       title: "Feedback Submitted",
@@ -249,11 +266,12 @@ const WorkoutDetail = ({ workout, onBack, onComplete }: WorkoutDetailProps) => {
 
           <div className="space-y-3">
             <Button 
-              onClick={() => setShowFeedback(true)}
+              onClick={handleComplete}
               className="w-full bg-gradient-primary hover:opacity-90"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Mark as Complete
+              {/* made button add to streaks on dashboard*/}
             </Button>
             
             <Button 

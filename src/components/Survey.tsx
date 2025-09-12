@@ -25,20 +25,19 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onComplete(formData);
+
+    if (Object.values(formData).every((value) => value !== "")) {
+      onComplete(formData); // 🔹 Send survey answers back to App.tsx
+    }
   };
 
-  const isValid = Object.values(formData).every(value => value !== "");
+  const isValid = Object.values(formData).every((value) => value !== "");
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl mx-auto p-8 shadow-medium">
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={onBack} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -51,9 +50,12 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Goal */}
           <div className="space-y-2">
             <Label htmlFor="goal">What's your main running goal?</Label>
-            <Select onValueChange={(value) => setFormData({...formData, goal: value})}>
+            <Select
+              onValueChange={(value) => setFormData({ ...formData, goal: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select your goal" />
               </SelectTrigger>
@@ -68,6 +70,7 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
             </Select>
           </div>
 
+          {/* Times */}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="mile-time">Current Mile Time (mm:ss)</Label>
@@ -75,7 +78,9 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
                 id="mile-time"
                 placeholder="e.g., 8:30"
                 value={formData.currentMileTime}
-                onChange={(e) => setFormData({...formData, currentMileTime: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, currentMileTime: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -84,11 +89,14 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
                 id="5k-time"
                 placeholder="e.g., 28:00"
                 value={formData.current5kTime}
-                onChange={(e) => setFormData({...formData, current5kTime: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, current5kTime: e.target.value })
+                }
               />
             </div>
           </div>
 
+          {/* Age + Gender */}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
@@ -97,14 +105,18 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
                 type="number"
                 placeholder="Enter your age"
                 value={formData.age}
-                onChange={(e) => setFormData({...formData, age: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, age: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
-              <RadioGroup 
+              <RadioGroup
                 value={formData.gender}
-                onValueChange={(value) => setFormData({...formData, gender: value})}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, gender: value })
+                }
                 className="flex space-x-6"
               >
                 <div className="flex items-center space-x-2">
@@ -123,11 +135,14 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
             </div>
           </div>
 
+          {/* Experience */}
           <div className="space-y-2">
             <Label>Running Experience</Label>
-            <RadioGroup 
+            <RadioGroup
               value={formData.experience}
-              onValueChange={(value) => setFormData({...formData, experience: value})}
+              onValueChange={(value) =>
+                setFormData({ ...formData, experience: value })
+              }
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="beginner" id="beginner" />
@@ -144,11 +159,14 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
             </RadioGroup>
           </div>
 
+          {/* Days per week */}
           <div className="space-y-2">
             <Label>How many days per week can you train?</Label>
-            <RadioGroup 
+            <RadioGroup
               value={formData.daysPerWeek}
-              onValueChange={(value) => setFormData({...formData, daysPerWeek: value})}
+              onValueChange={(value) =>
+                setFormData({ ...formData, daysPerWeek: value })
+              }
               className="flex space-x-6"
             >
               <div className="flex items-center space-x-2">
@@ -170,8 +188,9 @@ const Survey = ({ onComplete, onBack }: SurveyProps) => {
             </RadioGroup>
           </div>
 
-          <Button 
-            type="submit" 
+          {/* Submit */}
+          <Button
+            type="submit"
             disabled={!isValid}
             className="w-full bg-gradient-primary hover:opacity-90 text-lg py-6"
           >
