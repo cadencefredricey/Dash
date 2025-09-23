@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Survey from "./components/Survey";
 import Dashboard from "./components/Dashboard";
+import LoginForm from './LoginForm';
 
 
 const queryClient = new QueryClient({
