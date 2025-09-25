@@ -1,30 +1,39 @@
 import React, { useState } from 'react';
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
+
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('http://localhost:5000/login', { // matches your backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        // Redirect or handle successful login
+      if (response.ok && data.token) {
+        // Save token for auth persistence
+        localStorage.setItem('token', data.token);
+
+        // Redirect to dashboard
         window.location.href = '/dashboard';
       } else {
-        setErrorMsg(data.message || 'Login failed');
+        setErrorMsg(data.error || 'Login failed');
       }
-    } catch (error) {
-      setErrorMsg('An error occurred. Please try again.');
-      console.error(error);
+    } catch (err) {
+      console.error('Login error:', err);
+      setErrorMsg('Server error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,18 +42,23 @@ const LoginForm: React.FC = () => {
       <h2 className="text-2xl font-semibold text-center mb-4">Login</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+            Username
+          </label>
           <input
-            type="email"
-            id="email"
+            type="text"
+            id="username"
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
           />
         </div>
+
         <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
           <input
             type="password"
             id="password"
@@ -54,12 +68,17 @@ const LoginForm: React.FC = () => {
             required
           />
         </div>
+
         {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
         <button
           type="submit"
-          className="w-full py-2 mt-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          disabled={loading}
+          className={`w-full py-2 mt-4 rounded-md text-white ${
+            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>

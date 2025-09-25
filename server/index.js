@@ -9,6 +9,14 @@ const { Pool } = require('pg');
 const app = express();
 app.use(express.json());
 
+const cors = require("cors");
+
+app.use(cors({
+  origin: "http://localhost:8080", // frontend URL
+  credentials: true
+}));
+
+
 // connect to Neon Postgres
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -25,12 +33,21 @@ app.post('/register', async (req, res) => {
     }
 
     // check if username exists
-    const existing = await pool.query(
+    const existingUsername = await pool.query(
       'SELECT * FROM users WHERE username = $1',
       [username]
     );
-    if (existing.rows.length > 0) {
+    if (existingUsername.rows.length > 0) {
       return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // check if email exists (this is the new part)
+    const existingEmail = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already exists' });
     }
 
     // hash password
@@ -48,6 +65,7 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // Login route (checks username + password against DB)
 app.post('/login', async (req, res) => {

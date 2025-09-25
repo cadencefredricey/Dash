@@ -8,8 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Survey from "./components/Survey";
 import Dashboard from "./components/Dashboard";
-import LoginForm from './LoginForm';
-
+import LoginForm from './LoginForm'; // your login form
+import Register from "./pages/register"; // <-- add this
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,7 +29,8 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/login" element={<LoginForm />} /> 
+             <Route path="/register" element={<Register />} />  {/* <-- new */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

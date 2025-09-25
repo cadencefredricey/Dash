@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, Target, Timer, TrendingUp } from "lucide-react";
@@ -8,12 +9,16 @@ import Dashboard from "@/components/Dashboard";
 import MultiWeekTrainingPlan from "@/components/MultiWeekTrainingPlan";
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "dashboard" | "plan">("dashboard");
-  const [userData, setUserData] = useState(null);
+  const [currentStep, setCurrentStep] = useState<"landing" | "survey" | "dashboard" | "plan">("landing");
+  const [userData, setUserData] = useState<any>(null);
+  const navigate = useNavigate();
 
   const handleSurveyComplete = (data: any) => {
     setUserData(data);
-    setCurrentStep("dashboard");
+    //save user data
+     navigate("/register", { state: { surveyData: data } }); 
+    // Redirect to registration page for account creation
+    navigate("/register");
   };
 
   if (currentStep === "survey") {
@@ -22,10 +27,10 @@ const Index = () => {
 
   if (currentStep === "dashboard" && userData) {
     return (
-      <Dashboard 
-        userData={userData} 
+      <Dashboard
+        userData={userData}
         onNavigateToTraining={() => setCurrentStep("plan")}
-        onBack={() => setCurrentStep("survey")} 
+        onBack={() => setCurrentStep("survey")}
       />
     );
   }
@@ -33,21 +38,21 @@ const Index = () => {
   if (currentStep === "plan" && userData) {
     return <MultiWeekTrainingPlan userData={userData} onBack={() => setCurrentStep("dashboard")} />;
   }
-  
 
+  // Landing / welcome page
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src={heroImage} 
-            alt="Runners in action" 
+          <img
+            src={heroImage}
+            alt="Runners in action"
             className="w-full h-full object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-hero opacity-80" />
         </div>
-        
+
         <div className="relative container mx-auto px-4 py-20 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
@@ -56,14 +61,26 @@ const Index = () => {
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
               Your personalized running training plan. Achieve your goals with science-backed workouts tailored to your current fitness level.
             </p>
-            <Button 
+
+            {/* Start Survey Button */}
+            <Button
               variant="hero"
-              size="lg" 
+              size="lg"
               onClick={() => setCurrentStep("survey")}
               className="text-lg px-8 py-4 shadow-strong hover:shadow-medium transition-all duration-300"
             >
-              {/* customized button */}
-              Start Your Journey People
+              Start Your Journey
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+
+            {/* Login Button for returning users */}
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => navigate("/login")}
+              className="text-lg px-8 py-4 mt-4 shadow-strong hover:shadow-medium transition-all duration-300"
+            >
+              Login
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
