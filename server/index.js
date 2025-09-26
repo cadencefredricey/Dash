@@ -17,6 +17,7 @@ app.use(cors({
 }));
 
 
+
 // connect to Neon Postgres
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -24,47 +25,43 @@ const pool = new Pool({
 });
 
 // Register route (saves user to Postgres)
-app.post('/register', async (req, res) => {
+// Login route (checks username + password against DB) with debug logs
+app.post('/login', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, password } = req.body;
+    console.log("Login attempt:", { username, password });
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'All fields are required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    // check if username exists
-    const existingUsername = await pool.query(
+    const result = await pool.query(
       'SELECT * FROM users WHERE username = $1',
       [username]
     );
-    if (existingUsername.rows.length > 0) {
-      return res.status(400).json({ error: 'Username already exists' });
+
+    if (result.rows.length === 0) {
+      console.log("User not found in DB");
+      return res.status(400).json({ error: 'Invalid username or password' });
     }
 
-    // check if email exists (this is the new part)
-    const existingEmail = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
-    if (existingEmail.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already exists' });
+    const user = result.rows[0];
+    console.log("DB password hash:", user.password_hash);
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    console.log("Password match?", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid username or password' });
     }
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // insert into DB using password_hash column
-    const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
-      [username, email, hashedPassword]
-    );
-
-    res.status(201).json({ user: result.rows[0] });
+    res.json({ message: '✅ Login successful', user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
-    console.error("❌ Error in /register:", err);
+    console.error("❌ Error in /login:", err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 
 // Login route (checks username + password against DB)

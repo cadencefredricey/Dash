@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,8 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Survey from "./components/Survey";
 import Dashboard from "./components/Dashboard";
-import LoginForm from './LoginForm'; // your login form
-import Register from "./pages/register"; // <-- add this
+import LoginForm from './LoginForm';
+import Register from "./pages/register";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +21,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // temporary dummy user data for Dashboard
+  const dummyUser = { id: 0, username: "Demo", email: "demo@example.com" };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -29,8 +32,18 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginForm />} /> 
-             <Route path="/register" element={<Register />} />  {/* <-- new */}
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/dashboard"
+              element={
+                <Dashboard
+                  userData={dummyUser}
+                  onNavigateToTraining={() => {}}
+                  onBack={() => {}}
+                />
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
