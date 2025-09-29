@@ -12,7 +12,7 @@ const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/login', { // matches your backend
+      const response = await fetch('http://localhost:4000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -21,10 +21,7 @@ const LoginForm: React.FC = () => {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Save token for auth persistence
         localStorage.setItem('token', data.token);
-
-        // Redirect to dashboard
         window.location.href = '/dashboard';
       } else {
         setErrorMsg(data.error || 'Login failed');
