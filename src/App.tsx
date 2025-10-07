@@ -43,23 +43,16 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/training-plan"
-        element={
-          <PrivateRoute>
-            {surveyData ? (
-              <TrainingPlan
-                userData={surveyData}
-                onBack={() => navigate("/dashboard")}
-              />
-            ) : (
-              <Survey
-                onComplete={(data) => setSurveyData(data)}
-                onBack={() => navigate("/dashboard")}
-              />
-            )}
-          </PrivateRoute>
-        }
+  path="/training-plan"
+  element={
+    <PrivateRoute>
+      <TrainingPlan
+        userData={surveyData || { goal: "", daysPerWeek: "", experience: "" }}
+        onBack={() => navigate("/dashboard")}
       />
+    </PrivateRoute>
+  }
+/>
 
       <Route path="*" element={<NotFound />} />
     </Routes>

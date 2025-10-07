@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Clock, Target, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+
+
 
 interface Workout {
   id: string;
@@ -34,23 +38,46 @@ const WorkoutDetail = ({ workout, onBack, onComplete }: WorkoutDetailProps) => {
   });
   const [showFeedback, setShowFeedback] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate(); // <-- Add this line
 
-  // 🔹 Handle workout completion (updates streaks)
-  const handleComplete = () => {
-    const currentStreak = parseInt(localStorage.getItem("currentStreak") || "0", 10);
-    const newStreak = currentStreak + 1;
-    localStorage.setItem("currentStreak", String(newStreak));
+const handleComplete = () => {
+  const today = new Date();
+  const lastCompletedStr = localStorage.getItem("lastCompletedDate");
+  const lastCompleted = lastCompletedStr ? new Date(lastCompletedStr) : null;
 
-    const longestStreak = parseInt(localStorage.getItem("longestStreak") || "0", 10);
-    if (newStreak > longestStreak) {
-      localStorage.setItem("longestStreak", String(newStreak));
-    }
+  // Prevent double completion
+  if (lastCompleted?.toDateString() === today.toDateString()) return;
 
-    const totalWorkouts = parseInt(localStorage.getItem("totalWorkouts") || "0", 10) + 1;
-    localStorage.setItem("totalWorkouts", String(totalWorkouts));
+  // Update streak
+  let newStreak = parseInt(localStorage.getItem("currentStreak") || "0", 10);
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
 
-    setShowFeedback(true);
-  };
+  if (lastCompleted?.toDateString() === yesterday.toDateString()) {
+    newStreak += 1; // continuing streak
+  } else {
+    newStreak = 1; // reset streak
+  }
+
+  const newLongest = Math.max(
+    newStreak,
+    parseInt(localStorage.getItem("longestStreak") || "0", 10)
+  );
+  const newTotal = parseInt(localStorage.getItem("totalWorkouts") || "0", 10) + 1;
+
+  // Save to localStorage
+  localStorage.setItem("currentStreak", String(newStreak));
+  localStorage.setItem("longestStreak", String(newLongest));
+  localStorage.setItem("totalWorkouts", String(newTotal));
+  localStorage.setItem("lastCompletedDate", today.toDateString());
+
+  // ✅ Navigate back to dashboard
+  navigate("/dashboard"); // Dashboard will read from localStorage on mount
+};
+
+
+
+
 
   const handleSubmitFeedback = () => {
     toast({

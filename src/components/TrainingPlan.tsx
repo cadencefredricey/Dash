@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Clock, Target } from "lucide-react";
 import WeeklySchedule from "./WeeklySchedule";
 import WorkoutDetail from "./WorkoutDetail";
 
 interface TrainingPlanProps {
-  userData: any;
+  userData: { id: number; goal: string; daysPerWeek: string; experience: string };
   onBack: () => void;
 }
 
@@ -24,92 +23,127 @@ interface Workout {
 const TrainingPlan = ({ userData, onBack }: TrainingPlanProps) => {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
-  // Generate training plan based on user data
   const generatePlan = (): Workout[] => {
+    const weekNumber = 1; // you can change or make dynamic later
+
     const baseWorkouts: Workout[] = [
       {
-        id: "1",
+        id: `${weekNumber}-1`,
         day: "Monday",
         type: "run",
         title: "Easy Run",
-        duration: "30 mins",
-        description: "Comfortable pace run to build aerobic base. Focus on maintaining conversational pace.",
-        intensity: "low"
+        duration: `${25 + weekNumber * 2} mins`,
+        description:
+          "Comfortable pace run to build aerobic base. Focus on maintaining conversational pace.",
+        intensity: "low",
       },
       {
-        id: "2", 
+        id: `${weekNumber}-2`,
         day: "Tuesday",
         type: "cross-training",
         title: "Cross Training",
-        duration: "45 mins",
-        description: "Low-impact cardio like cycling, swimming, or elliptical to maintain fitness while reducing impact stress.",
-        intensity: "moderate"
+        duration: `${40 + weekNumber} mins`,
+        description:
+          "Low-impact cardio like cycling, swimming, or elliptical to maintain fitness while reducing impact stress.",
+        intensity: "moderate",
       },
       {
-        id: "3",
-        day: "Wednesday", 
+        id: `${weekNumber}-3`,
+        day: "Wednesday",
         type: "run",
-        title: "Interval Training",
-        duration: "35 mins",
-        description: "Speed work with intervals. Warm up 10 mins, 6x 400m at 5K pace with 90s recovery, cool down 10 mins.",
-        intensity: "high"
+        title: weekNumber <= 4 ? "Tempo Run" : "Interval Training",
+        duration: `${30 + weekNumber} mins`,
+        description:
+          weekNumber <= 4
+            ? "Comfortably hard pace for sustained effort. Build lactate threshold."
+            : "Speed work with intervals. Warm up 10 mins, intervals at target pace, cool down 10 mins.",
+        intensity: "high",
       },
       {
-        id: "4",
+        id: `${weekNumber}-4`,
         day: "Thursday",
         type: "stretching",
         title: "Recovery & Stretching",
-        duration: "30 mins", 
-        description: "Active recovery with dynamic stretches, foam rolling, and light mobility work.",
-        intensity: "low"
+        duration: "30 mins",
+        description:
+          "Active recovery with dynamic stretches, foam rolling, and light mobility work.",
+        intensity: "low",
       },
       {
-        id: "5",
+        id: `${weekNumber}-5`,
         day: "Friday",
         type: "rest",
         title: "Rest Day",
         duration: "0 mins",
-        description: "Complete rest to allow your body to recover and adapt to training stress.",
-        intensity: "low"
+        description:
+          "Complete rest to allow your body to recover and adapt to training stress.",
+        intensity: "low",
       },
       {
-        id: "6",
+        id: `${weekNumber}-6`,
         day: "Saturday",
-        type: "run", 
+        type: "run",
         title: "Long Run",
-        duration: "50 mins",
-        description: "Build endurance with longer, steady-pace run. Keep effort conversational throughout.",
-        intensity: "moderate"
+        duration: `${45 + weekNumber * 3} mins`,
+        description:
+          "Build endurance with longer, steady-pace run. Keep effort conversational throughout.",
+        intensity: "moderate",
       },
       {
-        id: "7",
+        id: `${weekNumber}-7`,
         day: "Sunday",
         type: "run",
-        title: "Recovery Run", 
-        duration: "25 mins",
-        description: "Very easy pace run to promote active recovery and blood flow.",
-        intensity: "low"
-      }
+        title: "Recovery Run",
+        duration: `${20 + weekNumber} mins`,
+        description:
+          "Very easy pace run to promote active recovery and blood flow.",
+        intensity: "low",
+      },
     ];
 
-    // Filter based on training days per week
     const daysPerWeek = parseInt(userData.daysPerWeek);
-    if (daysPerWeek <= 3) {
-      return baseWorkouts.filter(w => w.id === "1" || w.id === "3" || w.id === "6");
-    } else if (daysPerWeek === 4) {
-      return baseWorkouts.filter(w => w.id === "1" || w.id === "2" || w.id === "3" || w.id === "6");
-    } else if (daysPerWeek === 5) {
-      return baseWorkouts.filter(w => w.id !== "7" && w.id !== "5");
-    }
-    
-    return baseWorkouts.filter(w => w.id !== "5"); // 6 days
+    if (daysPerWeek <= 3)
+      return baseWorkouts.filter(
+        (w) => w.id.endsWith("1") || w.id.endsWith("3") || w.id.endsWith("6")
+      );
+    if (daysPerWeek === 4)
+      return baseWorkouts.filter(
+        (w) =>
+          w.id.endsWith("1") ||
+          w.id.endsWith("2") ||
+          w.id.endsWith("3") ||
+          w.id.endsWith("6")
+      );
+    if (daysPerWeek === 5)
+      return baseWorkouts.filter((w) => !w.id.endsWith("5") && !w.id.endsWith("7"));
+    return baseWorkouts.filter((w) => !w.id.endsWith("5"));
   };
 
   const weeklyPlan = generatePlan();
 
+  // Save training plan to backend
+  useEffect(() => {
+    const savePlan = async () => {
+      if (!userData?.id || !weeklyPlan?.length) return;
+
+      try {
+        const response = await fetch("/api/training-plan/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: userData.id, plan: weeklyPlan }),
+        });
+        if (!response.ok) console.error("Failed to save training plan");
+      } catch (err) {
+        console.error("Error saving training plan:", err);
+      }
+    };
+
+    savePlan();
+  }, [userData.id, weeklyPlan]);
+
   if (selectedWorkout) {
     return (
-      <WorkoutDetail 
+      <WorkoutDetail
         workout={selectedWorkout}
         onBack={() => setSelectedWorkout(null)}
         onComplete={() => setSelectedWorkout(null)}
@@ -120,24 +154,23 @@ const TrainingPlan = ({ userData, onBack }: TrainingPlanProps) => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto px-4 py-8">
+        {/* Header & overview */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={onBack} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Survey
+            Back to Dashboard
           </Button>
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-2">
             Your Personalized Training Plan
           </h1>
+          {/*
           <p className="text-muted-foreground">
-            Based on your goal: {userData.goal.replace("-", " ")} • {userData.daysPerWeek} days per week
+            Based on your goal: {userData.goal.replace("-", " ")} •{" "}
+            {userData.daysPerWeek} days per week
           </p>
+          */}
         </div>
-
-        {/* Plan Overview */}
+        {/*
         <Card className="mb-8 p-6 shadow-soft">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
@@ -169,11 +202,9 @@ const TrainingPlan = ({ userData, onBack }: TrainingPlanProps) => {
             </div>
           </div>
         </Card>
+        */}
 
-        <WeeklySchedule 
-          workouts={weeklyPlan}
-          onWorkoutClick={setSelectedWorkout}
-        />
+        <WeeklySchedule workouts={weeklyPlan} onWorkoutClick={setSelectedWorkout} />
       </div>
     </div>
   );
