@@ -10,9 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Clock, Target, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-
-
-
 interface Workout {
   id: string;
   day: string;
@@ -26,7 +23,7 @@ interface Workout {
 interface WorkoutDetailProps {
   workout: Workout;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete?: () => void; // callback to refresh dashboard
 }
 
 const WorkoutDetail = ({ workout, onBack, onComplete }: WorkoutDetailProps) => {
@@ -38,80 +35,73 @@ const WorkoutDetail = ({ workout, onBack, onComplete }: WorkoutDetailProps) => {
   });
   const [showFeedback, setShowFeedback] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate(); // <-- Add this line
+  const navigate = useNavigate();
 
-const handleComplete = () => {
-  const today = new Date();
-  const lastCompletedStr = localStorage.getItem("lastCompletedDate");
-  const lastCompleted = lastCompletedStr ? new Date(lastCompletedStr) : null;
+  // --- Complete Workout ---
+  const handleComplete = () => {
+    const today = new Date();
+    const todayStr = today.toDateString();
 
-  // Prevent double completion
-  if (lastCompleted?.toDateString() === today.toDateString()) return;
+    // Load completed dates
+    const storedDates = localStorage.getItem("completedDates");
+    const completedDates: string[] = storedDates ? JSON.parse(storedDates) : [];
 
-  // Update streak
-  let newStreak = parseInt(localStorage.getItem("currentStreak") || "0", 10);
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+    if (!completedDates.includes(todayStr)) {
+      completedDates.push(todayStr);
+      localStorage.setItem("completedDates", JSON.stringify(completedDates));
+    }
 
-  if (lastCompleted?.toDateString() === yesterday.toDateString()) {
-    newStreak += 1; // continuing streak
-  } else {
-    newStreak = 1; // reset streak
-  }
+    // Update total workouts
+    const totalWorkouts = parseInt(localStorage.getItem("totalWorkouts") || "0", 10) + 1;
+    localStorage.setItem("totalWorkouts", String(totalWorkouts));
 
-  const newLongest = Math.max(
-    newStreak,
-    parseInt(localStorage.getItem("longestStreak") || "0", 10)
-  );
-  const newTotal = parseInt(localStorage.getItem("totalWorkouts") || "0", 10) + 1;
+    // Update streaks
+    let currentStreak = 0;
+    for (let i = 0; i < 100; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      if (completedDates.includes(d.toDateString())) currentStreak++;
+      else break;
+    }
+    localStorage.setItem("currentStreak", String(currentStreak));
 
-  // Save to localStorage
-  localStorage.setItem("currentStreak", String(newStreak));
-  localStorage.setItem("longestStreak", String(newLongest));
-  localStorage.setItem("totalWorkouts", String(newTotal));
-  localStorage.setItem("lastCompletedDate", today.toDateString());
+    const longestStreak = Math.max(
+      currentStreak,
+      parseInt(localStorage.getItem("longestStreak") || "0", 10)
+    );
+    localStorage.setItem("longestStreak", String(longestStreak));
 
-  // ✅ Navigate back to dashboard
-  navigate("/dashboard"); // Dashboard will read from localStorage on mount
-};
+    // Refresh dashboard
+    if (onComplete) onComplete();
 
-
-
-
+    navigate("/dashboard");
+  };
 
   const handleSubmitFeedback = () => {
     toast({
       title: "Feedback Submitted",
-      description: "Thanks for the feedback! We'll use this to improve your future workouts.",
+      description: "Thanks for your feedback!",
     });
-    onComplete();
+    if (onComplete) onComplete();
+    setShowFeedback(false);
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "run":
-        return "bg-primary text-primary-foreground";
-      case "cross-training":
-        return "bg-secondary text-secondary-foreground";
-      case "stretching":
-        return "bg-accent text-accent-foreground";
-      case "rest":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
+      case "run": return "bg-primary text-primary-foreground";
+      case "cross-training": return "bg-secondary text-secondary-foreground";
+      case "stretching": return "bg-accent text-accent-foreground";
+      case "rest": return "bg-muted text-muted-foreground";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
   const getIntensityColor = (intensity: string) => {
     switch (intensity) {
-      case "low":
-        return "bg-accent/20 text-accent border-accent/30";
-      case "moderate":
-        return "bg-secondary/20 text-secondary border-secondary/30";
-      case "high":
-        return "bg-destructive/20 text-destructive border-destructive/30";
-      default:
-        return "bg-muted/20 text-muted-foreground border-muted/30";
+      case "low": return "bg-accent/20 text-accent border-accent/30";
+      case "moderate": return "bg-secondary/20 text-secondary border-secondary/30";
+      case "high": return "bg-destructive/20 text-destructive border-destructive/30";
+      default: return "bg-muted/20 text-muted-foreground border-muted/30";
     }
   };
 
@@ -119,49 +109,38 @@ const handleComplete = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-4 py-8 max-w-2xl">
-          <Button
-            variant="ghost"
-            onClick={() => setShowFeedback(false)}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Workout
+          <Button variant="ghost" onClick={() => setShowFeedback(false)} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Workout
           </Button>
 
           <Card className="p-6 shadow-soft">
-            <h2 className="text-2xl font-bold mb-6">How did it go?</h2>
-            
+            <h2 className="text-2xl font-bold mb-6">Workout Feedback</h2>
+
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label>Did you complete the workout?</Label>
-                <RadioGroup 
-                  value={feedback.completed}
-                  onValueChange={(value) => setFeedback({...feedback, completed: value})}
-                >
+                <RadioGroup value={feedback.completed} onValueChange={v => setFeedback({ ...feedback, completed: v })}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="yes" id="completed-yes" />
-                    <Label htmlFor="completed-yes">Yes, completed as planned</Label>
+                    <Label htmlFor="completed-yes">Yes</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="partial" id="completed-partial" />
-                    <Label htmlFor="completed-partial">Partially completed</Label>
+                    <Label htmlFor="completed-partial">Partially</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="completed-no" />
-                    <Label htmlFor="completed-no">Did not complete</Label>
+                    <Label htmlFor="completed-no">No</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div className="space-y-3">
-                <Label>How difficult was it?</Label>
-                <RadioGroup 
-                  value={feedback.difficulty}
-                  onValueChange={(value) => setFeedback({...feedback, difficulty: value})}
-                >
+                <Label>Difficulty</Label>
+                <RadioGroup value={feedback.difficulty} onValueChange={v => setFeedback({ ...feedback, difficulty: v })}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="easy" id="easy" />
-                    <Label htmlFor="easy">Too easy</Label>
+                    <Label htmlFor="easy">Easy</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="perfect" id="perfect" />
@@ -169,47 +148,35 @@ const handleComplete = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="hard" id="hard" />
-                    <Label htmlFor="hard">Too difficult</Label>
+                    <Label htmlFor="hard">Hard</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div className="space-y-3">
-                <Label>Any injuries or concerns?</Label>
-                <RadioGroup 
-                  value={feedback.injury}
-                  onValueChange={(value) => setFeedback({...feedback, injury: value})}
-                >
+                <Label>Any injuries?</Label>
+                <RadioGroup value={feedback.injury} onValueChange={v => setFeedback({ ...feedback, injury: v })}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="none" id="no-injury" />
-                    <Label htmlFor="no-injury">No issues</Label>
+                    <Label htmlFor="no-injury">None</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="minor" id="minor-pain" />
-                    <Label htmlFor="minor-pain">Minor soreness/discomfort</Label>
+                    <RadioGroupItem value="minor" id="minor" />
+                    <Label htmlFor="minor">Minor</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="injury" id="injury" />
-                    <Label htmlFor="injury">Injury or significant pain</Label>
+                    <Label htmlFor="injury">Major</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes (Optional)</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Any other thoughts about this workout?"
-                  value={feedback.notes}
-                  onChange={(e) => setFeedback({...feedback, notes: e.target.value})}
-                />
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" placeholder="Optional" value={feedback.notes} onChange={e => setFeedback({ ...feedback, notes: e.target.value })}/>
               </div>
 
-              <Button 
-                onClick={handleSubmitFeedback}
-                className="w-full bg-gradient-primary hover:opacity-90"
-                disabled={!feedback.completed || !feedback.difficulty || !feedback.injury}
-              >
+              <Button onClick={handleSubmitFeedback} className="w-full bg-gradient-primary hover:opacity-90" disabled={!feedback.completed || !feedback.difficulty || !feedback.injury}>
                 Submit Feedback
               </Button>
             </div>
@@ -222,29 +189,20 @@ const handleComplete = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Schedule
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
         <Card className="p-6 shadow-soft">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
               <h1 className="text-2xl font-bold">{workout.day}</h1>
-              <Badge className={getTypeColor(workout.type)}>
-                {workout.type.replace("-", " ")}
-              </Badge>
-              <Badge variant="outline" className={getIntensityColor(workout.intensity)}>
-                {workout.intensity} intensity
-              </Badge>
+              <Badge className={getTypeColor(workout.type)}>{workout.type.replace("-", " ")}</Badge>
+              <Badge variant="outline" className={getIntensityColor(workout.intensity)}>{workout.intensity} intensity</Badge>
             </div>
-            
+
             <h2 className="text-xl font-semibold mb-3">{workout.title}</h2>
-            
+
             <div className="flex items-center gap-1 text-muted-foreground mb-4">
               <Clock className="h-4 w-4" />
               <span>{workout.duration}</span>
@@ -255,59 +213,18 @@ const handleComplete = () => {
 
           <div className="mb-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Workout Details
+              <Target className="h-5 w-5 text-primary" /> Workout Details
             </h3>
-            <p className="text-muted-foreground leading-relaxed">
-              {workout.description}
-            </p>
+            <p className="text-muted-foreground leading-relaxed">{workout.description}</p>
           </div>
 
-          {workout.type === "run" && (
-            <div className="mb-6">
-              <Card className="p-4 bg-primary/5 border-primary/20">
-                <h4 className="font-semibold mb-2 text-primary">Running Tips:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Start with a 5-10 minute warm-up walk</li>
-                  <li>• Maintain a conversational pace for easy runs</li>
-                  <li>• Focus on good form and breathing</li>
-                  <li>• Cool down with 5 minutes of walking and stretching</li>
-                </ul>
-              </Card>
-            </div>
-          )}
-
-          {workout.type === "rest" && (
-            <div className="mb-6">
-              <Card className="p-4 bg-accent/5 border-accent/20">
-                <h4 className="font-semibold mb-2 text-accent">Rest Day Benefits:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Allows muscles to recover and rebuild</li>
-                  <li>• Prevents overtraining and injury</li>
-                  <li>• Light activities like walking are okay</li>
-                  <li>• Stay hydrated and get good sleep</li>
-                </ul>
-              </Card>
-            </div>
-          )}
-
           <div className="space-y-3">
-            <Button 
-              onClick={handleComplete}
-              className="w-full bg-gradient-primary hover:opacity-90"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Mark as Complete
-              {/* made button add to streaks on dashboard*/}
+            <Button onClick={handleComplete} className="w-full bg-gradient-primary hover:opacity-90">
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Complete
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFeedback(true)}
-              className="w-full"
-            >
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Report Issue or Skip
+
+            <Button variant="outline" onClick={() => setShowFeedback(true)} className="w-full">
+              <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue or Skip
             </Button>
           </div>
         </Card>
